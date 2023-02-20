@@ -6,10 +6,12 @@ import (
 	"errors"
 	"flag"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/OmarTariq612/greenlight/internal/data"
 	"github.com/OmarTariq612/greenlight/internal/jsonlog"
+	"github.com/OmarTariq612/greenlight/internal/mailer"
 	"github.com/joho/godotenv"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -31,12 +33,21 @@ type config struct {
 		brust   int
 		enabled bool
 	}
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
+	}
 }
 
 type application struct {
 	config config
 	logger *jsonlog.Logger
 	models data.Models
+	mailer mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {
@@ -61,6 +72,12 @@ func main() {
 	flag.IntVar(&cfg.limiter.brust, "limiter-brust", 4, "Rate limiter maximum brust")
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
 
+	flag.StringVar(&cfg.smtp.host, "smtp-host", "sandbox.smtp.mailtrap.io", "SMTP host")
+	flag.IntVar(&cfg.smtp.port, "smtp-port", 587, "SMTP port")
+	flag.StringVar(&cfg.smtp.username, "smtp-username", os.Getenv("SMTP_USERNAME"), "SMTP username")
+	flag.StringVar(&cfg.smtp.password, "smtp-password", os.Getenv("SMTP_PASSWORD"), "SMTP password")
+	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <no-reply@greenlight.omartariq.dev>", "SMTP sender")
+
 	flag.Parse()
 
 	db, err := openDB(cfg)
@@ -76,9 +93,10 @@ func main() {
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender),
 	}
 
-	if err = app.server(); err != nil {
+	if err = app.serve(); err != nil {
 		logger.PrintFatal(err, nil)
 	}
 }
