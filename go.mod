@@ -6,6 +6,7 @@ require (
 	github.com/jackc/pgx/v5 v5.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/julienschmidt/httprouter v1.3.0
+	golang.org/x/time v0.3.0
 )
 
 require (
