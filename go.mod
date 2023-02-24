@@ -3,6 +3,7 @@ module github.com/OmarTariq612/greenlight
 go 1.20
 
 require (
+	github.com/felixge/httpsnoop v1.0.3
 	github.com/go-mail/mail/v2 v2.3.0
 	github.com/jackc/pgx/v5 v5.3.0
 	github.com/joho/godotenv v1.5.1
