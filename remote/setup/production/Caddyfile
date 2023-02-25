@@ -1,0 +1,4 @@
+http://ip_address_or_domain {
+    respond /v1/metrics "Not Permitted" 403
+    reverse_proxy localhost:4000
+}
